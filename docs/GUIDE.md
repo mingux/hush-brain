@@ -93,6 +93,10 @@ Snapshots a directory tree (param `path`, poll every `interval` seconds), and re
 
 Use when: you've let a coding agent loose on a repo and want an independent record of what it touched; watching a downloads/inbox folder; keeping an eye on a build output directory.
 
+### Scheduling any on-demand agent — *new in v0.2*
+
+Add `every` to any oracle/seeker/architect spawn (`45s`, `30m`, `2h`, `1d`, or seconds) and it becomes a **scheduled** agent: run → sleep → run again until stopped. The card shows the cycle count and next run time; the feed logs a `sleeping` status between cycles. A Seeker on `every: 1d` is a morning digest that feeds your brain while you sleep.
+
 ### Architect — `on-demand` — *delegate*
 
 Asks the LLM to decompose a goal into up to 3 subtasks, then spawns Oracles/Seekers for them. Watch the fan-out live in the feed. If the plan doesn't parse, it falls back to a single Oracle.
@@ -229,7 +233,7 @@ The niche Hush Brain occupies: **the only one of these that combines orchestrato
 
 Honest list, informed by what the tools above do well and what users ask them for:
 
-1. **Scheduled agents** — OpenJarvis has a `scheduled` mode (morning digest); Hush Brain currently has on-demand + continuous only. A cron field on spawn is the natural v0.2 headline.
+1. ~~**Scheduled agents**~~ — ✅ shipped in v0.2: pass `every` (`45s`/`30m`/`2h`/`1d`) on spawn.
 2. **Session detail view** — the feed is a stream; there's no click-into-an-agent transcript view (disler's chat-transcript viewer is the model here).
 3. **Richer Claude Code hook rendering** — hook events land as generic feed lines; grouping by session with tool-level detail (like disler's swim lanes) would make playbook A stronger.
 4. **Brain maintenance agent** — claude-obsidian's `wiki-lint` (orphaned pages, stale claims) has no equivalent; memories only accumulate. A `curator` agent kind is planned.

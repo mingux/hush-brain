@@ -1,6 +1,6 @@
 [project]
 name = "hush-brain"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local-first AI agent orchestrator & monitor with a persistent markdown brain. Styled after the Matrix."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -69,13 +69,15 @@ async function refreshAgents() {
   const agents = await fetch("/api/agents").then((r) => r.json());
   $("agents").innerHTML = agents
     .map((a) => {
-      const stop = a.status === "running" && a.mode === "continuous"
+      const stop = ["running", "sleeping"].includes(a.status) && ["continuous", "scheduled"].includes(a.mode)
         ? `<button class="stop" onclick="stopAgent(${a.id})">stop</button>` : "";
       const err = a.error ? `<div class="meta" style="color:#ff4444">${esc(a.error)}</div>` : "";
+      const sched = a.mode === "scheduled"
+        ? ` · cycle ${a.cycles}${a.next_run ? " · next " + fmtTime(a.next_run) : ""}` : "";
       return `<div class="agent">
         <div class="row"><span class="name">${esc(a.name)}</span>
           <span><span class="status ${esc(a.status)}">${esc(a.status)}</span> ${stop}</span></div>
-        <div class="meta">${esc(a.mode)} · tokens ${a.input_tokens + a.output_tokens} · ${esc(JSON.stringify(a.params)).slice(0, 60)}</div>
+        <div class="meta">${esc(a.mode)}${sched} · tokens ${a.input_tokens + a.output_tokens} · ${esc(JSON.stringify(a.params)).slice(0, 60)}</div>
         ${err}</div>`;
     })
     .join("") || '<div class="meta" style="color:#00b32d">no programs loaded. spawn one.</div>';
@@ -91,12 +93,19 @@ $("spawn-form").addEventListener("submit", async (e) => {
   const arg = $("spawn-arg").value.trim();
   const keyByKind = { oracle: "question", seeker: "topic", sentinel: "path", architect: "goal" };
   const params = arg ? { [keyByKind[kind]]: arg } : {};
+  const every = $("spawn-every").value.trim();
+  if (every) params.every = every;
   const res = await fetch("/api/agents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ kind, params }),
   });
-  if (res.ok) $("spawn-arg").value = "";
+  if (res.ok) {
+    $("spawn-arg").value = "";
+    $("spawn-every").value = "";
+  } else {
+    alert((await res.json()).detail || "spawn failed");
+  }
   refreshAgents();
 });
 

@@ -69,6 +69,45 @@ def test_sentinel_is_continuous_and_stoppable(tmp_path):
     asyncio.run(scenario())
 
 
+def test_parse_every():
+    from hush_brain.orchestrator import parse_every
+
+    assert parse_every(90) == 90.0
+    assert parse_every("45s") == 45.0
+    assert parse_every("30m") == 1800.0
+    assert parse_every("2h") == 7200.0
+    assert parse_every("1d") == 86400.0
+    assert parse_every(0.1) == 1.0  # clamped to 1s floor
+    with pytest.raises(ValueError):
+        parse_every("soon")
+
+
+def test_scheduled_agent_repeats_until_stopped(tmp_path):
+    async def scenario():
+        store, bus, brain, orch = make_stack(tmp_path)
+        run = await orch.spawn("oracle", {"question": "tick", "every": 1})
+        assert run.mode == "scheduled"
+        await asyncio.sleep(2.6)  # enough for 2+ cycles at 1s
+        assert run.cycles >= 2
+        assert run.status in ("running", "sleeping")
+        stopped = await orch.stop(run.id)
+        assert stopped and run.status == "stopped"
+        outputs = [e for e in store.recent(100) if e["kind"] == "agent.output" and e["agent"] == run.name]
+        assert len(outputs) >= 2
+        store.close()
+
+    asyncio.run(scenario())
+
+
+def test_continuous_agent_rejects_every(tmp_path):
+    async def scenario():
+        _, _, _, orch = make_stack(tmp_path)
+        with pytest.raises(ValueError):
+            await orch.spawn("sentinel", {"path": ".", "every": "5m"})
+
+    asyncio.run(scenario())
+
+
 def test_agent_crash_marks_failed_not_fatal(tmp_path):
     async def scenario():
         store, bus, brain, orch = make_stack(tmp_path)

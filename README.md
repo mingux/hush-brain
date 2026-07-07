@@ -17,7 +17,7 @@ One process gives you:
 - 🧠 **The Brain** — a plain-markdown memory vault with two-tier recall (`hot.md` → `index.md` → memory pages), citations included
 - 🔌 **The Bridge** — an HTTP endpoint that ingests [Claude Code](https://claude.com/claude-code) hook events, so your coding agents show up in the same monitor
 
-📖 **New here? Read [the Operator's Guide](docs/GUIDE.md)** — dashboard tour, agent recipes, second-brain habits, playbooks, and how this compares to similar tools.
+📖 **New here? Start with the [step-by-step Tutorial](docs/TUTORIAL.md)** (your first 15 minutes, keystroke by keystroke), then the **[Operator's Guide](docs/GUIDE.md)** — dashboard tour, agent recipes, second-brain habits, playbooks, and how this compares to similar tools.
 
 ## Quickstart
 
@@ -66,6 +66,8 @@ Config knobs: `HUSH_OLLAMA_URL`, `HUSH_OLLAMA_MODEL`, `HUSH_ANTHROPIC_MODEL`, `H
 | **Seeker** | on-demand | Multi-round research loop; writes each finding into the brain |
 | **Sentinel** | continuous | Watches a directory; reports anomalies (file changes) to the feed |
 | **Architect** | on-demand | Decomposes a goal into subtasks and dispatches Oracles/Seekers |
+
+Any on-demand agent can be put **on a schedule** (v0.2): add `every` — `45s`, `30m`, `2h`, `1d` — to the spawn and it runs, sleeps, and repeats until stopped. A daily Seeker is a morning digest for your brain.
 
 Spawn from the dashboard, the API, or the CLI:
 

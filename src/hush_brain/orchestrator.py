@@ -3,10 +3,23 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from dataclasses import dataclass, field
 
 from .agents import AGENT_KINDS, AgentContext
+
+
+def parse_every(value) -> float:
+    """Parse a schedule interval: 90, "90", "45s", "30m", "2h", "1d" -> seconds."""
+    if isinstance(value, (int, float)):
+        seconds = float(value)
+    else:
+        match = re.match(r"^\s*(\d+(?:\.\d+)?)\s*([smhd]?)\s*$", str(value).lower())
+        if not match:
+            raise ValueError(f"bad interval {value!r} — use e.g. 45s, 30m, 2h, 1d")
+        seconds = float(match.group(1)) * {"": 1, "s": 1, "m": 60, "h": 3600, "d": 86400}[match.group(2)]
+    return max(1.0, seconds)
 
 
 @dataclass
@@ -22,6 +35,8 @@ class AgentRun:
     error: str | None = None
     input_tokens: int = 0
     output_tokens: int = 0
+    cycles: int = 0
+    next_run: float | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -35,6 +50,8 @@ class AgentRun:
             "error": self.error,
             "input_tokens": self.input_tokens,
             "output_tokens": self.output_tokens,
+            "cycles": self.cycles,
+            "next_run": self.next_run,
             "params": self.params,
         }
 
@@ -54,20 +71,25 @@ class Orchestrator:
             raise ValueError(f"unknown agent kind: {kind!r} (known: {sorted(AGENT_KINDS)})")
         params = params or {}
         agent_cls = AGENT_KINDS[kind]
+        interval = None
+        if params.get("every") is not None:
+            if agent_cls.mode == "continuous":
+                raise ValueError(f"{kind} is continuous — it runs until stopped; 'every' does not apply")
+            interval = parse_every(params["every"])
         self._kind_counters[kind] = self._kind_counters.get(kind, 0) + 1
         run = AgentRun(
             id=self._next_id,
             name=f"{kind}-{self._kind_counters[kind]}",
             kind=kind,
-            mode=agent_cls.mode,
+            mode="scheduled" if interval else agent_cls.mode,
             params=params,
         )
         self._next_id += 1
         self.runs[run.id] = run
-        self.tasks[run.id] = asyncio.create_task(self._supervise(run, agent_cls()))
+        self.tasks[run.id] = asyncio.create_task(self._supervise(run, agent_cls(), interval))
         return run
 
-    async def _supervise(self, run: AgentRun, agent) -> None:
+    async def _supervise(self, run: AgentRun, agent, interval: float | None = None) -> None:
         ctx = AgentContext(
             name=run.name,
             bus=self.bus,
@@ -80,7 +102,22 @@ class Orchestrator:
         run.status = "running"
         await self.bus.publish(run.name, "agent.status", {"status": "running"})
         try:
-            await agent.run(ctx)
+            if interval is None:
+                await agent.run(ctx)
+            else:  # scheduled: run, sleep, repeat until stopped
+                while True:
+                    await agent.run(ctx)
+                    run.cycles += 1
+                    run.status = "sleeping"
+                    run.next_run = time.time() + interval
+                    await self.bus.publish(
+                        run.name, "agent.status",
+                        {"status": "sleeping", "cycle": run.cycles, "next_run": run.next_run},
+                    )
+                    await asyncio.sleep(interval)
+                    run.status = "running"
+                    run.next_run = None
+                    await self.bus.publish(run.name, "agent.status", {"status": "running", "cycle": run.cycles + 1})
         except asyncio.CancelledError:
             run.status = "stopped"
             run.finished = time.time()

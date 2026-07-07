@@ -141,8 +141,9 @@ button {
 }
 button:hover { background: var(--green-dark); text-shadow: 0 0 6px var(--green); }
 
-.spawn { display: flex; gap: 6px; margin-bottom: 8px; }
-.spawn input { flex: 1; }
+.spawn { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.spawn input { flex: 1; min-width: 120px; }
+#spawn-every { flex: 0 1 170px; }
 .remember { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 
 /* agents */
@@ -161,6 +162,7 @@ button:hover { background: var(--green-dark); text-shadow: 0 0 6px var(--green);
 .status.done { color: var(--green-dim); border-color: var(--green-dark); }
 .status.failed { color: var(--red); border-color: var(--red); }
 .status.stopped { color: var(--amber); border-color: var(--amber); }
+.status.sleeping { color: var(--amber); border-color: var(--amber); animation: pulse 3s infinite; }
 .status.spawning { color: var(--green-dim); border-color: var(--green-dark); }
 @keyframes pulse { 50% { opacity: 0.45; } }
 
