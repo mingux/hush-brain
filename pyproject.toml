@@ -1,0 +1,34 @@
+[project]
+name = "hush-brain"
+version = "0.1.0"
+description = "Local-first AI agent orchestrator & monitor with a persistent markdown brain. Styled after the Matrix."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "mingux" }]
+keywords = ["ai", "agents", "orchestrator", "monitor", "second-brain", "matrix"]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "httpx>=0.27",
+    "anthropic>=0.40",
+]
+
+[project.scripts]
+hush = "hush_brain.cli:main"
+
+[project.urls]
+Repository = "https://github.com/mingux/hush-brain"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hush_brain"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

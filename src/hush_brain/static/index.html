@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HUSH BRAIN // the construct</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#129504;</text></svg>">
+</head>
+<body>
+  <canvas id="rain"></canvas>
+  <div class="scanlines"></div>
+
+  <div id="boot" class="boot">
+    <pre id="boot-text"></pre>
+  </div>
+
+  <main class="construct hidden" id="construct">
+    <header>
+      <h1>HUSH<span class="dim">::</span>BRAIN</h1>
+      <div class="sysline">
+        <span>provider <b id="sys-provider">…</b></span>
+        <span>events <b id="sys-events">0</b></span>
+        <span>tokens <b id="sys-tokens">0</b></span>
+        <span>link <b id="sys-link" class="bad">OFFLINE</b></span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="panel" id="agents-panel">
+        <h2>&gt; programs</h2>
+        <form id="spawn-form" class="spawn">
+          <select id="spawn-kind">
+            <option value="oracle">oracle — answer a question</option>
+            <option value="seeker">seeker — research a topic</option>
+            <option value="sentinel">sentinel — watch a directory</option>
+            <option value="architect">architect — decompose a goal</option>
+          </select>
+          <input id="spawn-arg" type="text" placeholder="question / topic / path / goal" autocomplete="off">
+          <button type="submit">spawn</button>
+        </form>
+        <div id="agents"></div>
+      </section>
+
+      <section class="panel" id="feed-panel">
+        <h2>&gt; the feed</h2>
+        <input id="feed-filter" type="text" placeholder="filter: agent or kind…" autocomplete="off">
+        <div id="feed"></div>
+      </section>
+
+      <section class="panel" id="brain-panel">
+        <h2>&gt; the brain</h2>
+        <div class="brain-stats"><span id="brain-memories">0</span> memories &middot; hot cache <span id="brain-hotwords">0</span> words</div>
+        <form id="recall-form" class="spawn">
+          <input id="recall-q" type="text" placeholder="recall…" autocomplete="off">
+          <button type="submit">recall</button>
+        </form>
+        <div id="recall-results"></div>
+        <h3>hot cache</h3>
+        <pre id="hot-cache">loading…</pre>
+        <form id="remember-form" class="remember">
+          <input id="mem-title" type="text" placeholder="memory title" autocomplete="off">
+          <textarea id="mem-content" rows="3" placeholder="what should the brain remember?"></textarea>
+          <button type="submit">remember</button>
+        </form>
+      </section>
+    </div>
+
+    <footer>there is no spoon &middot; <a href="https://github.com/mingux/hush-brain" target="_blank">hush-brain</a> v0.1</footer>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
