@@ -28,6 +28,20 @@ uv run hush serve
 Open **http://localhost:8199** and jack in.
 
 No `uv`? `pip install -e . && hush serve` works too.
+On Windows you can also just double-click `start.bat`.
+
+To get a global `hush` command usable from any folder:
+
+```bash
+uv tool install .
+hush serve
+```
+
+### Troubleshooting
+
+- **`error: Failed to spawn: hush — program not found`** — you ran `uv run hush serve` outside the repo folder. Either `cd` into it first, run `uv run --project <path-to-hush-brain> hush serve`, or install globally with `uv tool install <path-to-hush-brain>`.
+- **Port already in use** — something else is on 8199; run `hush serve --port 8200`.
+- **Blank page / no rain** — hard-refresh (Ctrl+F5); the dashboard is served from `/static`.
 
 ## Providers (local-first)
 
