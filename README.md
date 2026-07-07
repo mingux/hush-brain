@@ -17,6 +17,8 @@ One process gives you:
 - 🧠 **The Brain** — a plain-markdown memory vault with two-tier recall (`hot.md` → `index.md` → memory pages), citations included
 - 🔌 **The Bridge** — an HTTP endpoint that ingests [Claude Code](https://claude.com/claude-code) hook events, so your coding agents show up in the same monitor
 
+📖 **New here? Read [the Operator's Guide](docs/GUIDE.md)** — dashboard tour, agent recipes, second-brain habits, playbooks, and how this compares to similar tools.
+
 ## Quickstart
 
 ```bash
