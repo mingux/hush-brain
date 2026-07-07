@@ -12,3 +12,4 @@ uv.lock
 *.db-wal
 *.db-shm
 .claude/
+graphify-out/
