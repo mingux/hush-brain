@@ -4,7 +4,9 @@
 const canvas = document.getElementById("rain");
 const ctx = canvas.getContext("2d");
 const GLYPHS = "アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789HUSHBRAIN";
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 let columns = [];
+let rainTimer = null;
 
 function resizeRain() {
   canvas.width = window.innerWidth;
@@ -15,18 +17,28 @@ function resizeRain() {
 window.addEventListener("resize", resizeRain);
 resizeRain();
 
-setInterval(() => {
+function rainFrame() {
   ctx.fillStyle = "rgba(0, 5, 2, 0.08)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.font = "14px monospace";
   columns.forEach((y, i) => {
     const glyph = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-    const x = i * 16;
     ctx.fillStyle = Math.random() > 0.975 ? "#c8ffdb" : "#00ff41";
-    ctx.fillText(glyph, x, y * 16);
+    ctx.fillText(glyph, i * 16, y * 16);
     columns[i] = y * 16 > canvas.height && Math.random() > 0.975 ? 0 : y + 1;
   });
-}, 55);
+}
+
+function startRain() {
+  if (reducedMotion || rainTimer) return;
+  rainTimer = setInterval(rainFrame, 55);
+}
+function stopRain() {
+  clearInterval(rainTimer);
+  rainTimer = null;
+}
+startRain();
+document.addEventListener("visibilitychange", () => (document.hidden ? stopRain() : startRain()));
 
 // ---------- boot sequence ----------
 const BOOT_LINES = [
@@ -40,17 +52,33 @@ const BOOT_LINES = [
   "follow the white rabbit.",
 ];
 const bootText = document.getElementById("boot-text");
-let bootLine = 0;
-const bootTimer = setInterval(() => {
-  if (bootLine >= BOOT_LINES.length) {
+
+function finishBoot() {
+  document.getElementById("boot").classList.add("fade");
+  document.getElementById("construct").classList.remove("hidden");
+  sessionStorage.setItem("hush-booted", "1");
+}
+
+if (reducedMotion || sessionStorage.getItem("hush-booted")) {
+  finishBoot(); // boot plays once per tab session; skippable, never a toll
+} else {
+  let bootLine = 0;
+  const bootTimer = setInterval(() => {
+    if (bootLine >= BOOT_LINES.length) {
+      clearInterval(bootTimer);
+      finishBoot();
+      return;
+    }
+    bootText.textContent += BOOT_LINES[bootLine] + "\n";
+    bootLine++;
+  }, 220);
+  const skip = () => {
     clearInterval(bootTimer);
-    document.getElementById("boot").classList.add("fade");
-    document.getElementById("construct").classList.remove("hidden");
-    return;
-  }
-  bootText.textContent += BOOT_LINES[bootLine] + "\n";
-  bootLine++;
-}, 220);
+    finishBoot();
+  };
+  document.getElementById("boot").addEventListener("click", skip);
+  document.addEventListener("keydown", skip, { once: true });
+}
 
 // ---------- state ----------
 const $ = (id) => document.getElementById(id);
@@ -69,7 +97,7 @@ async function refreshAgents() {
   const agents = await fetch("/api/agents").then((r) => r.json());
   $("agents").innerHTML = agents
     .map((a) => {
-      const stop = ["running", "sleeping"].includes(a.status) && ["continuous", "scheduled"].includes(a.mode)
+      const stop = ["running", "sleeping", "spawning"].includes(a.status)
         ? `<button class="stop" onclick="stopAgent(${a.id})">stop</button>` : "";
       const err = a.error ? `<div class="meta" style="color:#ff4444">${esc(a.error)}</div>` : "";
       const sched = a.mode === "scheduled"
@@ -100,11 +128,13 @@ $("spawn-form").addEventListener("submit", async (e) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ kind, params }),
   });
+  const errBox = $("spawn-error");
   if (res.ok) {
     $("spawn-arg").value = "";
     $("spawn-every").value = "";
+    errBox.textContent = "";
   } else {
-    alert((await res.json()).detail || "spawn failed");
+    errBox.textContent = "✕ " + ((await res.json()).detail || "spawn failed");
   }
   refreshAgents();
 });
@@ -192,9 +222,10 @@ function connect() {
     const data = JSON.parse(msg.data);
     if (data.type === "snapshot") {
       $("sys-provider").textContent = data.provider;
+      $("sys-version").textContent = data.version;
       tokens = data.tokens;
       $("sys-tokens").textContent = tokens.input_tokens + tokens.output_tokens;
-      eventCount = data.events.length ? data.events[0].id : 0;
+      eventCount = data.event_count;
       $("sys-events").textContent = eventCount;
       $("feed").innerHTML = data.events.map(eventLine).join("");
       refreshAgents();

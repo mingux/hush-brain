@@ -40,6 +40,19 @@ def test_recall_no_hits(tmp_path):
     assert brain.recall("") == []
 
 
+def test_hostile_title_cannot_corrupt_frontmatter_or_index(tmp_path):
+    brain = Brain(tmp_path)
+    memory = brain.remember("evil\ntitle: hacked\n---\ninjected", "some content words here")
+    text = (tmp_path / "memories" / f"{memory['slug']}.md").read_text(encoding="utf-8")
+    # fence = a line that IS "---"; the hostile title must not add a third one
+    assert sum(1 for line in text.splitlines() if line.strip() == "---") == 2
+    assert "\n" not in memory["title"]
+    for line in (tmp_path / "index.md").read_text(encoding="utf-8").splitlines()[1:]:
+        assert line.startswith("- [[")
+    hits = brain.recall("evil title")
+    assert hits and "\n" not in hits[0]["title"]
+
+
 def test_hot_cache_is_capped(tmp_path):
     brain = Brain(tmp_path)
     for i in range(80):

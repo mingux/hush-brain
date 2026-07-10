@@ -108,6 +108,48 @@ def test_continuous_agent_rejects_every(tmp_path):
     asyncio.run(scenario())
 
 
+def test_sentinel_nonexistent_path_fails_fast(tmp_path):
+    async def scenario():
+        store, bus, brain, orch = make_stack(tmp_path)
+        run = await orch.spawn("sentinel", {"path": str(tmp_path / "does-not-exist")})
+        await orch.tasks[run.id]
+        assert run.status == "failed"
+        assert "not a directory" in run.error
+        store.close()
+
+    asyncio.run(scenario())
+
+
+def test_sentinel_respects_roots_allowlist(tmp_path, monkeypatch):
+    async def scenario():
+        store, bus, brain, orch = make_stack(tmp_path)
+        allowed = tmp_path / "allowed"
+        outside = tmp_path / "outside"
+        allowed.mkdir()
+        outside.mkdir()
+        monkeypatch.setenv("HUSH_SENTINEL_ROOTS", str(allowed))
+        run = await orch.spawn("sentinel", {"path": str(outside)})
+        await orch.tasks[run.id]
+        assert run.status == "failed"
+        assert "HUSH_SENTINEL_ROOTS" in run.error
+        store.close()
+
+    asyncio.run(scenario())
+
+
+def test_provider_config_errors(monkeypatch):
+    from hush_brain.providers import resolve_provider
+
+    monkeypatch.setenv("HUSH_PROVIDER", "skynet")
+    with pytest.raises(ValueError):
+        asyncio.run(resolve_provider())
+
+    monkeypatch.setenv("HUSH_PROVIDER", "anthropic")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    with pytest.raises(RuntimeError):
+        asyncio.run(resolve_provider())
+
+
 def test_agent_crash_marks_failed_not_fatal(tmp_path):
     async def scenario():
         store, bus, brain, orch = make_stack(tmp_path)

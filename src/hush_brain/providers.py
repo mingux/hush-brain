@@ -68,6 +68,11 @@ class OllamaProvider:
 
 class AnthropicProvider:
     def __init__(self, model: str = ANTHROPIC_MODEL):
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise RuntimeError(
+                "Anthropic provider selected but ANTHROPIC_API_KEY is not set. "
+                "Set the key, or use HUSH_PROVIDER=ollama / HUSH_PROVIDER=echo."
+            )
         import anthropic
 
         self.model = model
@@ -93,13 +98,15 @@ class AnthropicProvider:
 
 async def resolve_provider():
     """Pick the best available provider; degrade gracefully down the chain."""
-    forced = os.environ.get("HUSH_PROVIDER", "").lower()
+    forced = os.environ.get("HUSH_PROVIDER", "").strip().lower()
     if forced == "echo":
         return EchoProvider()
     if forced == "anthropic":
         return AnthropicProvider()
     if forced == "ollama":
         return OllamaProvider()
+    if forced:
+        raise ValueError(f"unknown HUSH_PROVIDER {forced!r} — use echo, ollama, or anthropic")
     if os.environ.get("ANTHROPIC_API_KEY"):
         return AnthropicProvider()
     ollama = OllamaProvider()

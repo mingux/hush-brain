@@ -47,18 +47,27 @@ def cmd_ask(args) -> None:
         provider = await resolve_provider()
         orchestrator = Orchestrator(bus, brain, provider)
         queue = bus.subscribe()
-        run_ = await orchestrator.spawn("oracle", {"question": args.question})
-        while True:
-            event = await queue.get()
-            if event["kind"] == "agent.output" and event["agent"] == run_.name:
-                print(event["payload"]["text"])
-                if event["payload"].get("citations"):
-                    print("\nsources: " + ", ".join(f"[[{c}]]" for c in event["payload"]["citations"]))
-            if event["kind"] in ("agent.done", "agent.error") and event["agent"] == run_.name:
-                if event["kind"] == "agent.error":
-                    print(f"agent failed: {event['payload'].get('error')}")
-                break
-        store.close()
+
+        async def wait_for_answer() -> None:
+            run_ = await orchestrator.spawn("oracle", {"question": args.question})
+            while True:
+                event = await queue.get()
+                if event["kind"] == "agent.output" and event["agent"] == run_.name:
+                    print(event["payload"]["text"])
+                    if event["payload"].get("citations"):
+                        print("\nsources: " + ", ".join(f"[[{c}]]" for c in event["payload"]["citations"]))
+                if event["kind"] in ("agent.done", "agent.error") and event["agent"] == run_.name:
+                    if event["kind"] == "agent.error":
+                        print(f"agent failed: {event['payload'].get('error')}")
+                    return
+
+        try:
+            await asyncio.wait_for(wait_for_answer(), timeout=args.timeout)
+        except asyncio.TimeoutError:
+            print(f"no answer after {args.timeout}s — provider stalled? (--timeout to raise)")
+        finally:
+            await orchestrator.shutdown()
+            store.close()
 
     asyncio.run(run())
 
@@ -106,6 +115,7 @@ def main() -> None:
 
     p_ask = sub.add_parser("ask", help="ask the Oracle a question (grounded in the brain)")
     p_ask.add_argument("question")
+    p_ask.add_argument("--timeout", type=float, default=300, help="seconds to wait for the answer (default 300)")
     p_ask.set_defaults(func=cmd_ask)
 
     p_rem = sub.add_parser("remember", help="write a memory into the brain")

@@ -30,22 +30,23 @@
       <section class="panel" id="agents-panel">
         <h2>&gt; programs</h2>
         <form id="spawn-form" class="spawn">
-          <select id="spawn-kind">
+          <select id="spawn-kind" aria-label="agent kind">
             <option value="oracle">oracle — answer a question</option>
             <option value="seeker">seeker — research a topic</option>
             <option value="sentinel">sentinel — watch a directory</option>
             <option value="architect">architect — decompose a goal</option>
           </select>
-          <input id="spawn-arg" type="text" placeholder="question / topic / path / goal" autocomplete="off">
-          <input id="spawn-every" type="text" placeholder="every (30m, 2h) — optional" autocomplete="off" title="repeat on a schedule, e.g. 45s, 30m, 2h, 1d">
+          <input id="spawn-arg" type="text" placeholder="question / topic / path / goal" aria-label="agent argument: question, topic, path, or goal" autocomplete="off">
+          <input id="spawn-every" type="text" placeholder="every (30m, 2h) — optional" aria-label="schedule interval, optional, e.g. 30m or 2h" autocomplete="off" title="repeat on a schedule, e.g. 45s, 30m, 2h, 1d">
           <button type="submit">spawn</button>
         </form>
+        <div id="spawn-error" role="alert"></div>
         <div id="agents"></div>
       </section>
 
       <section class="panel" id="feed-panel">
         <h2>&gt; the feed</h2>
-        <input id="feed-filter" type="text" placeholder="filter: agent or kind…" autocomplete="off">
+        <input id="feed-filter" type="text" placeholder="filter: agent or kind…" aria-label="filter feed by agent name or event kind" autocomplete="off">
         <div id="feed"></div>
       </section>
 
@@ -53,21 +54,21 @@
         <h2>&gt; the brain</h2>
         <div class="brain-stats"><span id="brain-memories">0</span> memories &middot; hot cache <span id="brain-hotwords">0</span> words</div>
         <form id="recall-form" class="spawn">
-          <input id="recall-q" type="text" placeholder="recall…" autocomplete="off">
+          <input id="recall-q" type="text" placeholder="recall…" aria-label="search the brain" autocomplete="off">
           <button type="submit">recall</button>
         </form>
         <div id="recall-results"></div>
         <h3>hot cache</h3>
         <pre id="hot-cache">loading…</pre>
         <form id="remember-form" class="remember">
-          <input id="mem-title" type="text" placeholder="memory title" autocomplete="off">
-          <textarea id="mem-content" rows="3" placeholder="what should the brain remember?"></textarea>
+          <input id="mem-title" type="text" placeholder="memory title" aria-label="memory title" autocomplete="off">
+          <textarea id="mem-content" rows="3" placeholder="what should the brain remember?" aria-label="memory content"></textarea>
           <button type="submit">remember</button>
         </form>
       </section>
     </div>
 
-    <footer>there is no spoon &middot; <a href="https://github.com/mingux/hush-brain" target="_blank">hush-brain</a> v0.1</footer>
+    <footer>there is no spoon &middot; <a href="https://github.com/mingux/hush-brain" target="_blank">hush-brain</a> v<span id="sys-version">…</span></footer>
   </main>
 
   <script src="/static/app.js"></script>

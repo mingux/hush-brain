@@ -8,11 +8,20 @@ Plain files, zero lock-in.
 
 from __future__ import annotations
 
+import json
 import re
 import time
 from pathlib import Path
 
 HOT_WORD_CAP = 500
+TITLE_MAX = 120
+
+
+def clean_title(title: str) -> str:
+    """One line, bounded length — a newline or '---' in a title must never
+    corrupt frontmatter or index.md."""
+    title = re.sub(r"\s+", " ", str(title)).strip()
+    return title[:TITLE_MAX] or "untitled"
 
 
 def slugify(text: str) -> str:
@@ -39,6 +48,7 @@ class Brain:
     # -- write ---------------------------------------------------------------
 
     def remember(self, title: str, content: str, tags: list[str] | None = None) -> dict:
+        title = clean_title(title)
         slug = slugify(title)
         path = self.memories_dir / f"{slug}.md"
         n = 2
@@ -48,9 +58,10 @@ class Brain:
             n += 1
         slug = path.stem
         created = time.strftime("%Y-%m-%d %H:%M:%S")
-        tag_line = ", ".join(tags or [])
+        tag_line = ", ".join(re.sub(r"[^\w-]", "", t) for t in (tags or []))
+        # json.dumps produces a valid YAML double-quoted scalar (quotes escaped)
         path.write_text(
-            f"---\ntitle: {title}\ncreated: {created}\ntags: [{tag_line}]\n---\n\n{content}\n",
+            f"---\ntitle: {json.dumps(title, ensure_ascii=False)}\ncreated: {created}\ntags: [{tag_line}]\n---\n\n{content}\n",
             encoding="utf-8",
         )
         hook = re.sub(r"\s+", " ", content).strip()[:100]
@@ -86,6 +97,11 @@ class Brain:
             text = path.read_text(encoding="utf-8")
             title_match = re.search(r"^title:\s*(.+)$", text, re.MULTILINE)
             title = title_match.group(1).strip() if title_match else path.stem
+            if title.startswith('"'):  # quoted frontmatter scalar
+                try:
+                    title = json.loads(title)
+                except ValueError:
+                    pass
             score = 3 * len(query_tokens & _tokens(title)) + len(query_tokens & _tokens(text))
             if score > 0:
                 body = text.split("---", 2)[-1].strip()

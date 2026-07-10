@@ -16,7 +16,8 @@ class EventBus:
     async def publish(self, agent: str, kind: str, payload: dict | None = None) -> dict:
         payload = payload or {}
         ts = time.time()
-        event_id = self.store.insert(ts, agent, kind, payload)
+        # SQLite commit is blocking I/O — keep it off the event loop
+        event_id = await asyncio.to_thread(self.store.insert, ts, agent, kind, payload)
         event = {"id": event_id, "ts": ts, "agent": agent, "kind": kind, "payload": payload}
         for queue in list(self._subscribers):
             try:

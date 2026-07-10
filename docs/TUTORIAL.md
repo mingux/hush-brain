@@ -106,7 +106,7 @@ hush status
 
 ## Step 9 — Wire in Claude Code (optional, 3 min)
 
-Make your Claude Code sessions visible in the feed. Open `~/.claude/settings.json` (create it if missing) and merge in:
+Make your Claude Code sessions visible in the feed. First grab your operator token — it's printed when `hush serve` starts, and also lives in `~/.hush-brain/token.txt`. Then open `~/.claude/settings.json` (create it if missing) and merge in, replacing `YOUR-TOKEN`:
 
 ```json
 {
@@ -114,7 +114,7 @@ Make your Claude Code sessions visible in the feed. Open `~/.claude/settings.jso
     "PostToolUse": [{
       "hooks": [{
         "type": "command",
-        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -d @-"
+        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -H \"Authorization: Bearer YOUR-TOKEN\" -d @-"
       }]
     }]
   }

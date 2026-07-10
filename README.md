@@ -90,9 +90,13 @@ Plain markdown, zero lock-in (inspired by [claude-obsidian](https://github.com/A
 
 Recall reads hot → index → targeted pages, and answers cite `[[slug]]` so every claim is traceable.
 
+## Security
+
+The API and WebSocket are protected by an **operator token**, printed at `hush serve` startup and stored in `~/.hush-brain/token.txt` (pin a stable one with `HUSH_TOKEN`). Local browsers get it automatically via a SameSite cookie — the dashboard needs zero setup. Everything else sends `Authorization: Bearer <token>`. The Host header is validated (DNS-rebinding defence; add LAN hostnames via `HUSH_ALLOWED_HOSTS`) and cross-origin WebSocket connections are refused. Optionally restrict what Sentinels may watch with `HUSH_SENTINEL_ROOTS`.
+
 ## Claude Code bridge
 
-Add a hook to your Claude Code `settings.json` and your coding sessions appear in the feed:
+Add a hook to your Claude Code `settings.json` and your coding sessions appear in the feed (replace `YOUR-TOKEN` with the operator token):
 
 ```json
 {
@@ -100,7 +104,7 @@ Add a hook to your Claude Code `settings.json` and your coding sessions appear i
     "PostToolUse": [{
       "hooks": [{
         "type": "command",
-        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -d @-"
+        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -H \"Authorization: Bearer YOUR-TOKEN\" -d @-"
       }]
     }]
   }

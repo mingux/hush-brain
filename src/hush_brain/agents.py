@@ -112,8 +112,19 @@ class SentinelAgent:
                     return snap
         return snap
 
+    def _validate_root(self, path: str) -> str:
+        root = os.path.realpath(path)
+        if not os.path.isdir(root):
+            raise ValueError(f"sentinel path is not a directory: {path!r}")
+        allowed = os.environ.get("HUSH_SENTINEL_ROOTS", "")
+        if allowed:
+            roots = [os.path.realpath(r.strip()) for r in allowed.split(os.pathsep) if r.strip()]
+            if not any(root == r or root.startswith(r + os.sep) for r in roots):
+                raise ValueError(f"path {root!r} is outside HUSH_SENTINEL_ROOTS")
+        return root
+
     async def run(self, ctx: AgentContext) -> None:
-        root = ctx.params.get("path", ".")
+        root = self._validate_root(ctx.params.get("path", "."))
         interval = max(1.0, float(ctx.params.get("interval", 5)))
         previous = await asyncio.to_thread(self._snapshot, root)
         await ctx.emit("agent.output", {"text": f"Sentinel online. Watching {root} ({len(previous)} files)."})

@@ -130,25 +130,27 @@ This turns Hush Brain into a **mission control for your coding agents**. Claude 
 
 In `~/.claude/settings.json` (all sessions) or a project's `.claude/settings.json`:
 
+The endpoint requires the operator token (printed at `hush serve` startup; stored in `~/.hush-brain/token.txt`; pin a stable one with `HUSH_TOKEN`). Replace `YOUR-TOKEN` below:
+
 ```json
 {
   "hooks": {
     "PostToolUse": [{
       "hooks": [{
         "type": "command",
-        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -d @-"
+        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -H \"Authorization: Bearer YOUR-TOKEN\" -d @-"
       }]
     }],
     "SessionStart": [{
       "hooks": [{
         "type": "command",
-        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -d @-"
+        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -H \"Authorization: Bearer YOUR-TOKEN\" -d @-"
       }]
     }],
     "Stop": [{
       "hooks": [{
         "type": "command",
-        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -d @-"
+        "command": "curl -s -X POST http://localhost:8199/api/hooks/claude -H \"Content-Type: application/json\" -H \"Authorization: Bearer YOUR-TOKEN\" -d @-"
       }]
     }]
   }
@@ -176,9 +178,12 @@ hush --data-dir D:\vaults\work serve           # separate vault per context
 
 Everything the dashboard does goes through the same REST/WS API, so you can drive Hush Brain from scripts, other tools, or your own UIs:
 
+All `/api/*` routes need the operator token — add `-H "Authorization: Bearer YOUR-TOKEN"` to each call below (token printed at startup / `~/.hush-brain/token.txt`):
+
 ```bash
 # spawn agents
 curl -X POST localhost:8199/api/agents -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR-TOKEN" \
   -d '{"kind":"sentinel","params":{"path":"C:/Dev/myrepo","interval":5}}'
 
 # stop one
